@@ -9,15 +9,18 @@ import {
   mdiCalendar,
   mdiPlus,
   mdiReload,
-  mdiClose
+  mdiClose,
+  mdiPencilOutline
 } from "@mdi/js";
 import { useState, useEffect, useMemo } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
 import { getColorByGrade } from "../helpers/common";
 
 function StudentSubjectGradeList({ student, subject, classroom }) {
-  const [isModalShown, setShow] = useState(false);
-  const [addGradeShow, setAddGradeShow] = useState(false);
+  const [isModalShown, setShow] = useState();
+  const [addGradeShow, setAddGradeShow] = useState({
+    state: false
+  });
   const [studentSubjectGradeListCall, setStudentSubjectGradeListCall] =
     useState({
       state: "pending",
@@ -25,13 +28,19 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
 
   const handleShowModal = () => setShow(true);
   const handleCloseModal = () => setShow(false);
-  const handleAddGradeShow = () => setAddGradeShow(true);
+  const handleAddGradeShow = (data) => setAddGradeShow({ state: true, data });
 
   const handleGradeAdded = (grade) => {
     if (studentSubjectGradeListCall.state === "success") {
+      let gradeList = [...studentSubjectGradeListCall.data];
+
+      if (grade.id) {
+        gradeList = gradeList.filter((g) => g.id !== grade.id);
+      }
+
       setStudentSubjectGradeListCall({
         state: "success",
-        data: [...studentSubjectGradeListCall.data, grade]
+        data: [...gradeList, grade]
       });
     }
   }
@@ -152,6 +161,14 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
                         >
                           {new Date(grade.dateTs).toLocaleDateString()}
                         </td>
+                        <td>
+                          <Icon 
+                            size={0.8} 
+                            path={mdiPencilOutline} 
+                            style={{ color: 'orange', cursor: 'pointer' }} 
+                            onClick={() => handleAddGradeShow(grade)}
+                          />
+                        </td>
                       </tr>
                     );
                   })}
@@ -194,7 +211,7 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
             </Button>
             <Button
               variant="success"
-              onClick={handleAddGradeShow}
+              onClick={() => handleAddGradeShow()}
             >
               <div className="d-flex flex-row gap-1 align-items-center">
                 <Icon path={mdiPlus} size={1}></Icon>
@@ -208,7 +225,8 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
       <StudentGradeForm
         student={student}
         subject={subject}
-        show={addGradeShow}
+        show={addGradeShow.state}
+        grade={addGradeShow.data}
         setAddGradeShow={setAddGradeShow}
         classroom={classroom}
         onComplete={(grade) => handleGradeAdded(grade)}

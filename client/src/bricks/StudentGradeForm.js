@@ -1,24 +1,37 @@
 import Icon from '@mdi/react';
 import { mdiLoading } from '@mdi/js';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Form, Button, Row, Col } from "react-bootstrap";
 
-export default function StudentGradeForm({ student, subject, classroom, show, setAddGradeShow, onComplete }) {
+export default function StudentGradeForm({ student, subject, classroom, show, setAddGradeShow, grade, onComplete }) {
   const defaultForm = {
     description: "",
     dateTs: new Date().toISOString().substring(0, 10),
     grade: null,
     weight: 1,
-  }
+  };
   const [validated, setValidated] = useState(false);
   const [formData, setFormData] = useState(defaultForm);
   const [studentAddGradeCall, setStudentAddGradeCall] = useState({
     state: 'inactive'
-  })
+  });
+
+  useEffect(() => {
+    if (grade) {
+      setFormData({
+        description: grade.description,
+        dateTs: new Date(grade.dateTs).toISOString().substring(0, 10),
+        grade: grade.grade,
+        weight: grade.weight
+      });
+    } else {
+      setFormData(defaultForm);
+    }
+  }, [grade]);
 
   const handleClose = () => {
+    setAddGradeShow({ state: false });
     setFormData(defaultForm);
-    setAddGradeShow(false);
   };
 
   const setField = (name, val) => {
@@ -39,6 +52,7 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
       ...formData,
       studentId: student.id,
       subjectId: subject.id,
+      id: grade ? grade.id : null
     };
 
     if (!form.checkValidity()) {
@@ -47,7 +61,7 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
     }
 
     setStudentAddGradeCall({ state: 'pending' });
-    const res = await fetch(`http://localhost:3000/grade/create`, {
+    const res = await fetch(`http://localhost:3000/grade/${grade ? 'update' : 'create'}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -75,7 +89,7 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
       <Modal show={show} onHide={handleClose}>
         <Form noValidate validated={validated} onSubmit={(e) => handleSubmit(e)}>
           <Modal.Header closeButton>
-            <Modal.Title>Přidat známku</Modal.Title>
+            <Modal.Title>{grade ? 'Upravit' : 'Přidat'} známku</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div>Žák: {student.firstname + " " + student.surname}</div>
@@ -146,8 +160,8 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
           <Modal.Footer>
             <div className="d-flex flex-row justify-content-between align-items-center w-100">
               <div>
-                { studentAddGradeCall.state === 'error' && 
-                  <div className="text-danger">Error: {studentAddGradeCall.error.errorMessage}</div> 
+                {studentAddGradeCall.state === 'error' &&
+                  <div className="text-danger">Error: {studentAddGradeCall.error.errorMessage}</div>
                 }
               </div>
               <div className="d-flex flex-row gap-2">
@@ -155,10 +169,10 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
                   Zavřít
                 </Button>
                 <Button variant="primary" type="submit" disabled={studentAddGradeCall.state === 'pending'}>
-                  { studentAddGradeCall.state === 'pending' ? (
+                  {studentAddGradeCall.state === 'pending' ? (
                     <Icon size={0.8} path={mdiLoading} spin={true} />
                   ) : (
-                    "Přidat"
+                    grade ? 'Upravit' : 'Přidat'
                   )}
                 </Button>
               </div>
