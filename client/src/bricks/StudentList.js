@@ -79,11 +79,11 @@ function StudentList(props) {
         {filteredStudentList.length ? (
           <div class="container">
             <div className={"d-block d-md-none"}>
-              <StudentGridList studentList={filteredStudentList} />
+              <StudentGridList studentList={filteredStudentList} classroom={props.classroom} />
             </div>
             <div className={"d-none d-md-block"}>
               {isGrid ? (
-                <StudentGridList studentList={filteredStudentList} />
+                <StudentGridList studentList={filteredStudentList} classroom={props.classroom} />
               ) : (
                 <StudentTableList studentList={filteredStudentList} />
               )}

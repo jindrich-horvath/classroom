@@ -13,9 +13,8 @@ import { useState, useEffect, useMemo } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
 import { getColorByGrade } from "../helpers/common";
 
-function StudentSubjectGradeList({ student, subject }) {
+function StudentSubjectGradeList({ student, subject, classroom }) {
   const [isModalShown, setShow] = useState(false);
-  const [reload, setReload] = useState(false);
   const [addGradeShow, setAddGradeShow] = useState(false);
   const [studentSubjectGradeListCall, setStudentSubjectGradeListCall] =
     useState({
@@ -23,31 +22,27 @@ function StudentSubjectGradeList({ student, subject }) {
     });
 
   const handleShowModal = () => setShow(true);
-
   const handleCloseModal = () => setShow(false);
-
   const handleAddGradeShow = () => setAddGradeShow(true);
 
-  useEffect(() => {
-    setStudentSubjectGradeListCall({ state: "pending" });
+  async function fetchData() {
+    const res = await fetch(
+      `http://localhost:3000/grade/list?subjectId=${subject.id}&studentId=${student.id}`
+    );
+    const data = await res.json();
 
-    async function fetchData() {
-      const res = await fetch(
-        `http://localhost:3000/grade/list?subjectId=${subject.id}&studentId=${student.id}`
-      );
-      const data = await res.json();
-
-      if (res.status >= 400) {
-        setStudentSubjectGradeListCall({ state: "error", error: data });
-      } else {
-        setStudentSubjectGradeListCall({ state: "success", data });
-      }
-
-      setReload(false);
+    if (res.status >= 400) {
+      setStudentSubjectGradeListCall({ state: "error", error: data });
+    } else {
+      setStudentSubjectGradeListCall({ state: "success", data });
     }
 
+    setReload(false);
+  };
+
+  useEffect(() => {
     if (isModalShown) fetchData();
-  }, [isModalShown, student, subject, reload]);
+  }, [isModalShown, student, subject]);
 
   const average = useMemo(() => {
     if (studentSubjectGradeListCall.state === "success") {
@@ -83,6 +78,10 @@ function StudentSubjectGradeList({ student, subject }) {
             <div>
               <span className="text-muted">Předmět: </span>
               <b>{subject.name}</b>
+            </div>
+            <div>
+              <span className="text-muted">Třída: </span>
+              <b>{classroom.name}</b>
             </div>
             <div>
               <span className="text-muted">Průměr: </span>
@@ -181,6 +180,7 @@ function StudentSubjectGradeList({ student, subject }) {
         subject={subject}
         show={addGradeShow}
         setAddGradeShow={setAddGradeShow}
+        classroom={classroom}
       />
 
       <Icon

@@ -31,6 +31,7 @@ function Student(props) {
                   <StudentSubjectGradeList
                     student={props.student}
                     subject={subject}
+                    classroom={props.classroom}
                   />
                 </div>
               </div>
