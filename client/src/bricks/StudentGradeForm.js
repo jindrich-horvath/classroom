@@ -1,16 +1,25 @@
+import Icon from '@mdi/react';
+import { mdiLoading } from '@mdi/js';
 import { useState } from "react";
 import { Modal, Form, Button, Row, Col } from "react-bootstrap";
 
-export default function StudentGradeForm({ student, subject, classroom, show, setAddGradeShow }) {
-  const [validated, setValidated] = useState(false);
-  const [formData, setFormData] = useState({
+export default function StudentGradeForm({ student, subject, classroom, show, setAddGradeShow, onComplete }) {
+  const defaultForm = {
     description: "",
     dateTs: new Date().toISOString().substring(0, 10),
     grade: null,
     weight: 1,
-  });
+  }
+  const [validated, setValidated] = useState(false);
+  const [formData, setFormData] = useState(defaultForm);
+  const [studentAddGradeCall, setStudentAddGradeCall] = useState({
+    state: 'inactive'
+  })
 
-  const handleClose = () => setAddGradeShow(false);
+  const handleClose = () => {
+    setFormData(defaultForm);
+    setAddGradeShow(false);
+  };
 
   const setField = (name, val) => {
     return setFormData((formData) => {
@@ -37,7 +46,28 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
       return;
     }
 
-    console.log(payload);
+    setStudentAddGradeCall({ state: 'pending' });
+    const res = await fetch(`http://localhost:3000/grade/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (res.status >= 400) {
+      setStudentAddGradeCall({ state: "error", error: data });
+    } else {
+      setStudentAddGradeCall({ state: "success", data });
+
+      if (typeof onComplete === 'function') {
+        onComplete(data);
+      }
+
+      handleClose();
+    }
   };
 
   return (
@@ -114,13 +144,24 @@ export default function StudentGradeForm({ student, subject, classroom, show, se
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <div className="d-flex flex-row gap-2">
-              <Button variant="secondary" onClick={handleClose}>
-                Zavřít
-              </Button>
-              <Button variant="primary" type="submit">
-                Vytvořit
-              </Button>
+            <div className="d-flex flex-row justify-content-between align-items-center w-100">
+              <div>
+                { studentAddGradeCall.state === 'error' && 
+                  <div className="text-danger">Error: {studentAddGradeCall.error.errorMessage}</div> 
+                }
+              </div>
+              <div className="d-flex flex-row gap-2">
+                <Button variant="secondary" onClick={handleClose}>
+                  Zavřít
+                </Button>
+                <Button variant="primary" type="submit" disabled={studentAddGradeCall.state === 'pending'}>
+                  { studentAddGradeCall.state === 'pending' ? (
+                    <Icon size={0.8} path={mdiLoading} spin={true} />
+                  ) : (
+                    "Přidat"
+                  )}
+                </Button>
+              </div>
             </div>
           </Modal.Footer>
         </Form>

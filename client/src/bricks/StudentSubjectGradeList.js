@@ -7,7 +7,9 @@ import {
   mdiStar,
   mdiText,
   mdiCalendar,
-  mdiPlus
+  mdiPlus,
+  mdiReload,
+  mdiClose
 } from "@mdi/js";
 import { useState, useEffect, useMemo } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
@@ -18,14 +20,25 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
   const [addGradeShow, setAddGradeShow] = useState(false);
   const [studentSubjectGradeListCall, setStudentSubjectGradeListCall] =
     useState({
-      state: "inactive",
+      state: "pending",
     });
 
   const handleShowModal = () => setShow(true);
   const handleCloseModal = () => setShow(false);
   const handleAddGradeShow = () => setAddGradeShow(true);
 
-  async function fetchData() {
+  const handleGradeAdded = (grade) => {
+    if (studentSubjectGradeListCall.state === "success") {
+      setStudentSubjectGradeListCall({
+        state: "success",
+        data: [...studentSubjectGradeListCall.data, grade]
+      });
+    }
+  }
+
+  const fetchData = async () => {
+    setStudentSubjectGradeListCall({ state: "pending" });
+
     const res = await fetch(
       `http://localhost:3000/grade/list?subjectId=${subject.id}&studentId=${student.id}`
     );
@@ -36,8 +49,6 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
     } else {
       setStudentSubjectGradeListCall({ state: "success", data });
     }
-
-    setReload(false);
   };
 
   useEffect(() => {
@@ -163,15 +174,34 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            style={{ float: "right" }}
-            variant="secondary"
-            class="btn btn-success btn-sm"
-            onClick={handleAddGradeShow}
-          >
-            <Icon path={mdiPlus} size={1} />
-            Přidat známku
-          </Button>
+          <div className="d-flex flex-row gap-2">
+            <Button
+              variant="light"
+              className="text-muted"
+              onClick={handleCloseModal}
+            >
+              <div className="d-flex flex-row gap-1 align-items-center">
+                <Icon path={mdiClose} size={1}></Icon>
+                <span>Zavřít</span>
+              </div>
+            </Button>
+            <Button
+              variant="light"
+              className="text-muted"
+              onClick={fetchData}
+            >
+              <Icon size={1} path={mdiReload}></Icon>
+            </Button>
+            <Button
+              variant="success"
+              onClick={handleAddGradeShow}
+            >
+              <div className="d-flex flex-row gap-1 align-items-center">
+                <Icon path={mdiPlus} size={1}></Icon>
+                <span>Přidat známku</span>
+              </div>
+            </Button>
+          </div>
         </Modal.Footer>
       </Modal>
 
@@ -181,6 +211,7 @@ function StudentSubjectGradeList({ student, subject, classroom }) {
         show={addGradeShow}
         setAddGradeShow={setAddGradeShow}
         classroom={classroom}
+        onComplete={(grade) => handleGradeAdded(grade)}
       />
 
       <Icon
