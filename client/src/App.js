@@ -8,12 +8,15 @@ import Icon from "@mdi/react";
 import { mdiLoading, mdiAlertOctagonOutline } from "@mdi/js";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import UserContext from "./UserProvider";
 
 function App() {
   const [listClassroomsCall, setListClassroomsCall] = useState({
     state: "pending",
   });
+  const { user, users, changeUser, getClassroomsToShow, isLoggedIn } = useContext(UserContext);
+
   let navigate = useNavigate();
 
   useEffect(() => {
@@ -38,21 +41,27 @@ function App() {
           </Nav.Link>
         );
       case "success":
-        return (
-          <NavDropdown title="Select Classroom" id="navbarScrollingDropdown">
-            {listClassroomsCall.data.map((classroom) => {
-              return (
-                <NavDropdown.Item
-                  onClick={() =>
-                    navigate("/classroomDetail?id=" + classroom.id)
-                  }
-                >
-                  {classroom.name}
-                </NavDropdown.Item>
-              );
-            })}
-          </NavDropdown>
-        );
+        if (isLoggedIn()) {
+          return (
+            <NavDropdown title="Select Classroom" id="navbarScrollingDropdown">
+              {listClassroomsCall.data.map((classroom) => {
+                const allowedClassrooms = getClassroomsToShow(listClassroomsCall.data)
+
+                if (allowedClassrooms.includes(classroom.id)) {
+                  return (
+                    <NavDropdown.Item
+                      onClick={() =>
+                        navigate("/classroomDetail?id=" + classroom.id)
+                      }
+                    >
+                      {classroom.name}
+                    </NavDropdown.Item>
+                  );
+                }
+              })}
+            </NavDropdown>
+          );
+        }
       case "error":
         return (
           <div>
@@ -93,6 +102,18 @@ function App() {
                 <Nav.Link onClick={() => navigate("/subjectList")}>
                   Předměty
                 </Nav.Link>
+                <NavDropdown align="end" title={user.fullName ?? 'Nepřihlášen'}>
+                  {users.map(user => {
+                    return (
+                      <NavDropdown.Item onClick={() => changeUser(user.id)}>
+                        {user.fullName} ({user.role.name})
+                      </NavDropdown.Item>
+                    )
+                  })}
+                  <NavDropdown.Item onClick={() => changeUser(-1)}>
+                    Odhlásit se
+                  </NavDropdown.Item>
+                </NavDropdown>
               </Nav>
             </Offcanvas.Body>
           </Navbar.Offcanvas>
