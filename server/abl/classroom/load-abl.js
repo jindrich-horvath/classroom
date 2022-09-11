@@ -17,6 +17,12 @@ let subjectDao = new SubjectDao(
   path.join(__dirname, "..", "..", "storage", "subjects.json")
 );
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 let schema = {
   type: "object",
   properties: {
@@ -30,13 +36,15 @@ async function LoadAbl(req, res) {
     const ajv = new Ajv();
     const body = req.query.id ? req.query : req.body;
 
+    await sleep(2000);
+
     const valid = ajv.validate(schema, body);
     if (valid) {
       // get classroom
       const classroomId = body.id;
       const classroom = await classroomDao.getClassroom(classroomId);
       if (!classroom) {
-        res
+        return res
           .status(400)
           .send({ error: `classroom with id '${classroomId}' doesn't exist` });
       }
@@ -69,21 +77,20 @@ async function LoadAbl(req, res) {
             weightSum += grade.weight;
           });
           if (gradeSum) averageGrade = gradeSum / weightSum;
-          console.log(averageGrade);
           student.subjectList.push({ ...subject, averageGrade });
         });
       });
 
       res.json({ ...classroom, studentList: classroomStudentList });
     } else {
-      res.status(400).send({
+      return res.status(400).send({
         errorMessage: "validation of input failed",
         params: body,
         reason: ajv.errors,
       });
     }
   } catch (e) {
-    res.status(500).send(e);
+    return res.status(500).send(e);
   }
 }
 

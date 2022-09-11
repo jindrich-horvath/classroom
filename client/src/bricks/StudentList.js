@@ -8,6 +8,7 @@ import Form from "react-bootstrap/Form";
 
 import Icon from "@mdi/react";
 import { mdiTable, mdiViewGridOutline, mdiMagnify } from "@mdi/js";
+import styles from "../css/studentList.module.css";
 
 function StudentList(props) {
   const [viewType, setViewType] = useState("grid");
@@ -15,7 +16,7 @@ function StudentList(props) {
   const [searchBy, setSearchBy] = useState("");
 
   const filteredStudentList = useMemo(() => {
-    return props.studentList.filter((item) => {
+    return props.classroom.studentList.filter((item) => {
       return (
         item.firstname
           .toLocaleLowerCase()
@@ -23,7 +24,7 @@ function StudentList(props) {
         item.surname.toLocaleLowerCase().includes(searchBy.toLocaleLowerCase())
       );
     });
-  }, [searchBy, props.studentList]);
+  }, [searchBy, props.classroom.studentList]);
 
   function handleSearch(event) {
     event.preventDefault();
@@ -72,11 +73,19 @@ function StudentList(props) {
           </div>
         </div>
       </Navbar>
-      {isGrid ? (
-        <StudentGridList studentList={filteredStudentList} />
-      ) : (
-        <StudentTableList studentList={filteredStudentList} />
-      )}
+      <div className={styles.studentList}>
+        {filteredStudentList.length ? (
+          isGrid ? (
+            <StudentGridList studentList={filteredStudentList} />
+          ) : (
+            <StudentTableList studentList={filteredStudentList} />
+          )
+        ) : (
+          <div style={{ margin: "16px auto", textAlign: "center" }}>
+            Nejsou žádní studenti ke zobrazení
+          </div>
+        )}
+      </div>
     </div>
   );
 }
