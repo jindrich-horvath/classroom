@@ -12,15 +12,12 @@ import {
   mdiClose,
   mdiPencilOutline
 } from "@mdi/js";
-import { useState, useEffect, useMemo, useContext } from "react";
-import { Modal, Table, Button, Alert } from "react-bootstrap";
+import { useState, useEffect, useMemo } from "react";
+import { Modal, Table, Button } from "react-bootstrap";
 import { getColorByGrade } from "../helpers/common";
-import StudentGradeDelete from "./StudentGradeDelete";
-import UserContext from "../UserProvider";
 
-function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
-  const { canEdit } = useContext(UserContext)
-  const [isModalShown, setShow] = useState(false);
+function StudentSubjectGradeList({ student, subject, classroom }) {
+  const [isModalShown, setShow] = useState();
   const [addGradeShow, setAddGradeShow] = useState({
     state: false
   });
@@ -28,12 +25,8 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
     useState({
       state: "pending",
     });
-  const [deleteGradeError, setDeleteGradeError] = useState('');
 
-  const handleShowModal = () => {
-    if (!disabled)
-      setShow(true);
-  };
+  const handleShowModal = () => setShow(true);
   const handleCloseModal = () => setShow(false);
   const handleAddGradeShow = (data) => setAddGradeShow({ state: true, data });
 
@@ -52,18 +45,8 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
     }
   }
 
-  const handleGradeDeleted = (gradeId) => {
-    if (studentSubjectGradeListCall.state === "success") {
-      setStudentSubjectGradeListCall({
-        state: "success",
-        data: studentSubjectGradeListCall.data.filter((g) => g.id !== gradeId)
-      });
-    }
-  }
-
   const fetchData = async () => {
     setStudentSubjectGradeListCall({ state: "pending" });
-    setDeleteGradeError('');
 
     const res = await fetch(
       `http://localhost:3000/grade/list?subjectId=${subject.id}&studentId=${student.id}`
@@ -107,11 +90,6 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
           <Modal.Title>Přehled známek</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {deleteGradeError &&
-            <Alert variant="danger">
-              Error: {deleteGradeError}
-            </Alert>
-          }
           <div>
             <div>
               <span className="text-muted">Žák: </span>
@@ -154,7 +132,6 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
                     <th style={{ width: "120px", color: "grey" }}>
                       <Icon size={1} path={mdiCalendar} />
                     </th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -185,22 +162,12 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
                           {new Date(grade.dateTs).toLocaleDateString()}
                         </td>
                         <td>
-                          {canEdit() &&
-                            <div className="d-flex flex-row align-items-center gap-2">
-                              <Icon
-                                size={0.8}
-                                path={mdiPencilOutline}
-                                style={{ color: 'orange', cursor: 'pointer' }}
-                                onClick={() => handleAddGradeShow(grade)}
-                              />
-
-                              <StudentGradeDelete
-                                grade={grade}
-                                onDelete={(id) => handleGradeDeleted(id)}
-                                onError={(error) => setDeleteGradeError(error)}
-                              ></StudentGradeDelete>
-                            </div>
-                          }
+                          <Icon 
+                            size={0.8} 
+                            path={mdiPencilOutline} 
+                            style={{ color: 'orange', cursor: 'pointer' }} 
+                            onClick={() => handleAddGradeShow(grade)}
+                          />
                         </td>
                       </tr>
                     );
@@ -242,17 +209,15 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
             >
               <Icon size={1} path={mdiReload}></Icon>
             </Button>
-            {canEdit() &&
-              <Button
-                variant="success"
-                onClick={() => handleAddGradeShow()}
-              >
-                <div className="d-flex flex-row gap-1 align-items-center">
-                  <Icon path={mdiPlus} size={1}></Icon>
-                  <span>Přidat známku</span>
-                </div>
-              </Button>
-            }
+            <Button
+              variant="success"
+              onClick={() => handleAddGradeShow()}
+            >
+              <div className="d-flex flex-row gap-1 align-items-center">
+                <Icon path={mdiPlus} size={1}></Icon>
+                <span>Přidat známku</span>
+              </div>
+            </Button>
           </div>
         </Modal.Footer>
       </Modal>
@@ -269,10 +234,7 @@ function StudentSubjectGradeList({ student, subject, classroom, disabled }) {
 
       <Icon
         path={mdiClipboardListOutline}
-        style={{
-          color: disabled ? 'lightgray' : "grey",
-          cursor: disabled ? "default" : "pointer"
-        }}
+        style={{ color: "grey", cursor: "pointer" }}
         size={1}
         onClick={handleShowModal}
       />
