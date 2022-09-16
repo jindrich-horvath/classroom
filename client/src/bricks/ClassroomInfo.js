@@ -3,9 +3,9 @@ import styles from "../css/classroom.module.css";
 
 function ClassroomInfo(props) {
   return (
-    <h1>
+    <h1 data-testid="classroom-title">
       Classroom{" "}
-      <span className={styles.classroomNameHeader}>
+      <span data-testid="classroom-name" className={styles.classroomNameHeader}>
         {props.classroom.name}
       </span>
     </h1>
